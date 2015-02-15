@@ -9,25 +9,47 @@ public class Message {
     // Message Types
     public enum type {client, peer}
     // Current Message Data
-    private final String[] message;
+    private String message;
     private final type ctype;
+    private final int port;
+    private final String ip;
     
     /**
-     * Create new Message
+     * Create new Message (Client Message)
      * @param nMessage Message String
-     * @param nType Message Type
+     * @param ntype Message Type
+     * @param nIP Message Source IP
+     * @param nPort Message Source Port
      */
-    public Message(String nMessage, type nType) {
-        ctype = nType;
-        message = nMessage.split("\\s+");
+    public Message(String nMessage, type ntype, String nIP, int nPort) {
+        ctype = ntype;
+        message = nMessage;
+        ip = nIP;
+        port = nPort;
+    }
+       
+    /**
+     * Get Message String
+     * @return message string
+     */
+    public String getMessage() {
+        return message;
     }
     
     /**
-     * Get Message String array (splitted input String)
-     * @return string array
+     * Set Message String
+     * @param nMessage new message
      */
-    public String[] getMessage() {
-        return message;
+    public void setMessage(String nMessage) {
+        message = nMessage;
+    }
+    
+    public String getIP() {
+        return ip;
+    }
+    
+    public int getPort() {
+        return port;
     }
     
     /**
@@ -39,10 +61,10 @@ public class Message {
     }
     
     /**
-     * Get Message Array Size
-     * @return integer lenght
+     * Checks if current Message is from a peer
+     * @return true (Peer), false (Client)
      */
-    public int messageSize() {
-        return message.length;
+    public boolean isPeer() {
+        return ctype == type.peer;
     }
 }

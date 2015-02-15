@@ -3,11 +3,13 @@ package system;
 import components.SystemQueue;
 import components.Vehicle;
 import network.TCPServer;
+import network.UDPServer;
 
 
 public class MainSystem {
     static int MAX_SEATS = 50;
     static int TCP_PORT = 4401;
+    static int UDP_PORT = 5501;
     
     /**
      * 
@@ -18,13 +20,16 @@ public class MainSystem {
         SystemQueue mainQueue = new SystemQueue();
         // Main Vehicle data
         Vehicle mainVehicle = new Vehicle(MAX_SEATS);
-        // Client TCP Server
-        TCPServer server = new TCPServer(TCP_PORT, mainQueue);
+        // Main TCP Server
+        TCPServer tcpServer = new TCPServer(TCP_PORT, mainQueue);
+        // Main UDP Server
+        UDPServer udpServer = new UDPServer(UDP_PORT, mainQueue);
         // Main System Worker
-        MainWorker worker = new MainWorker(mainVehicle, mainQueue, server);
+        MainWorker worker = new MainWorker(mainVehicle, mainQueue, tcpServer, udpServer);
         
         // Start Threads
         worker.start();
-        server.start();
+        tcpServer.start();
+        udpServer.start();
     }
 }

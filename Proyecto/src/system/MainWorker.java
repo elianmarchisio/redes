@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import network.TCPServer;
+import network.UDPServer;
 
 /**
  * MainWorker Class, Implements System worker
@@ -19,17 +20,20 @@ public class MainWorker extends Thread {
     private final Vehicle vehicle;
     // Network
     private final TCPServer tcpServer;
+    private final UDPServer udpServer;
     
     /**
      * Main Worker Constructor
      * @param mainVehicle System Vehicle
      * @param mainQueue Message queue to process
      * @param tcpSrv Main tcpServer
+     * @param udpSrv Main udpServer
      */
-    public MainWorker(Vehicle mainVehicle, SystemQueue mainQueue, TCPServer tcpSrv) {
+    public MainWorker(Vehicle mainVehicle, SystemQueue mainQueue, TCPServer tcpSrv, UDPServer udpSrv) {
         vehicle = mainVehicle;
         queue = mainQueue;
         tcpServer = tcpSrv;
+        udpServer = udpSrv;
     }
     
     @Override
@@ -51,7 +55,8 @@ public class MainWorker extends Thread {
     }
 
     private void processClientMessage(Message message) throws IOException {
-        String command = message.getMessage()[0];
+        String[] messageData = message.getMessage().split("\\s+");
+        String command = messageData[0];
         String response = null;
         // New Client Connected
         if(command.equals("CONNECTED"))
@@ -64,7 +69,8 @@ public class MainWorker extends Thread {
                      + "Commands aren't case sensitive\n";
         // Request End, finalize client message processing and close connection
         if(command.equals("END")){
-            tcpServer.sendData(">> Session ends, Closing connection\n");
+            message.setMessage(">> Session ends, Closing connection\n");
+            tcpServer.sendData(message);
             tcpServer.closeConnection();
             return;
         }
@@ -74,12 +80,12 @@ public class MainWorker extends Thread {
         // Request Reserver N Seats
         if(command.equals("RESERVE")){
             // Check valid command reserve and number of seats
-            if(message.messageSize() < 2)
+            if(messageData.length < 2)
                 response = ">> Invalid number of seats to reserve\n";
             else
                 try {
                     // Get integer argument
-                    int seats = Integer.parseInt(message.getMessage()[1]);
+                    int seats = Integer.parseInt(messageData[1]);
                     // Try to reserve seats
                     if(vehicle.reserve(seats))
                         response = ">> Reserved " + seats + " seats\n";
@@ -92,12 +98,12 @@ public class MainWorker extends Thread {
         // Request Cancel N Seats
         if(command.equals("CANCEL")){
             // Check valid command cancel and number of seats
-            if(message.messageSize() < 2)
+            if(messageData.length < 2)
                 response = ">> Invalid number of seats to cancel\n";
             else
                 try {
                     // Get integer argument
-                    int seats = Integer.parseInt(message.getMessage()[1]);
+                    int seats = Integer.parseInt(messageData[1]);
                     // Try to reserve seats
                     if(vehicle.cancel(seats))
                         response = ">> Canceled " + seats + " seats\n";
@@ -111,12 +117,15 @@ public class MainWorker extends Thread {
         if(response == null)
             response = ">> Invalid Command/Request\n";
         // Send Response
-        tcpServer.sendData(response);
+        message.setMessage(response);
+        tcpServer.sendData(message);
     }
 
     private void processPeerMessage(Message message) throws IOException {
-        
-        tcpServer.sendData(message.getMessage()[0].toUpperCase() + '\n');
+        System.out.println(message.getMessage());
+        System.out.println(message.getIP());
+        System.out.println(message.getPort());
+        message.setMessage(message.getMessage().toUpperCase());
+        udpServer.sendData(message);
     }
-
 }

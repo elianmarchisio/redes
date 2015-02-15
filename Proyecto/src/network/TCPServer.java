@@ -1,6 +1,7 @@
 package network;
 
 import components.Message;
+import components.Message.type;
 import components.SystemQueue;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -10,8 +11,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
- * Process TCP Server Connections
- * Offer Client Request to main app queue
+ * Process TCP Connections (only 1 connection at time)
+ * Offer (add) Client Request to main app queue
  */
 public class TCPServer extends Thread {
     // Server
@@ -88,11 +89,11 @@ public class TCPServer extends Thread {
     
     /**
      * Send message to the connected client
-     * @param data String to send
+     * @param message Message to send
      * @throws IOException 
      */
-    public void sendData(String data) throws IOException {
-        outToClient.writeBytes(data);
+    public void sendData(Message message) throws IOException {
+        outToClient.writeBytes(message.getMessage());
     }
     
     /**
@@ -101,8 +102,11 @@ public class TCPServer extends Thread {
      */
     private void processData() throws IOException {
         try {
+            // Get client IP and Port (Allows to implment multiple client connections)
+            String clientIP = connectionSocket.getInetAddress().getHostAddress();
+            int clientPort = connectionSocket.getPort();
             // New client connected
-            queue.offer(new Message("CONNECTED",Message.type.client));
+            queue.offer(new Message("CONNECTED", type.client, clientIP, clientPort));
             // Print connected client info
             System.out.println("Client Connected " + connectionSocket.toString());
             // Read Client inputs
@@ -110,11 +114,10 @@ public class TCPServer extends Thread {
                 String clientSentence = getData().toUpperCase();
                 System.out.println("Received: " + clientSentence);
                 // Enqueue client request
-                queue.offer(new Message(clientSentence,Message.type.client));
+                queue.offer(new Message(clientSentence, type.client, clientIP, clientPort));
             }
         } catch(Exception ex) {
             System.out.println("Client Closed Connection " + connectionSocket.toString());
         }
-        closeConnection();
     }
 }
