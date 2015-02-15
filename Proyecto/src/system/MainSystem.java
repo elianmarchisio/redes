@@ -5,7 +5,7 @@ import components.Vehicle;
 import network.TCPServer;
 
 
-public class System {
+public class MainSystem {
     static int MAX_SEATS = 50;
     static int TCP_PORT = 4401;
     
